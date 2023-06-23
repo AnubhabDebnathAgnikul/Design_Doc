@@ -1,0 +1,28 @@
+@startuml UART_comm
+
+(*) --> loop start
+note right: loop to read data from IMU\n through UART
+--> set time out
+note left: timeout for 2ms
+if "data available?" then
+    ->[yes] read first byte
+    if "header detected?" then
+        -->[ yes] wait on the data
+        if "timeout" then
+            -->[ yes] datagram end
+            --> wait for Sequencer message
+            note right: breaks from this loop
+        else
+            -left->[no] continue to read next next byte
+        endif
+    else
+        
+        -up->[no] loop start 
+        
+    endif
+else  
+    -left->[ no] loop break
+endif
+
+
+@enduml

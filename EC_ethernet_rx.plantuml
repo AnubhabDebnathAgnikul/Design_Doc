@@ -1,0 +1,55 @@
+@startuml EC_ethernet_receiver
+
+(*)--> Ethernet_Receiver
+-> get process id 
+--> set process name
+-->ipc_init()
+--> Loop 
+-right-> wait for connection
+-right-> accept connection
+--> check ip
+if "ip matches with FC" then
+    -left-> [yes] reject other \nconnection request
+    -left->connection handler
+    --> get network info
+    --> Read with timeout
+    if "Message received" then
+        -->[yes] packetize 
+        -> Extract the number of parameters \nreceived in current packet
+        --> store paramaters in packet_bodies
+        --> Check number of packets received
+        --> 1 packet
+        "Check number of packets received"-left-> 2 packets
+        "Check number of packets received"-right-> more than 2 packets 
+
+    else
+        ->[no] Failure
+    endif
+
+else
+    -->[no] close conection & report
+endif
+"connection handler" -up-> Loop
+
+
+
+"1 packet"--> Sequencer
+--> check parameter id
+->  send to Sequencer with time stamp
+"2 packets"-left-> Sequencer/Gimbal 
+"Sequencer/Gimbal" --> Sequencer
+"Sequencer/Gimbal" -left-> Gimbal
+ 
+"Gimbal"--> yaw
+"Gimbal"-up-> pitch
+"more than 2 packets"-->throw error
+
+"connection handler" -left-> check for connection failure
+note left: connection check loop
+if "no error" then
+    -> "connection handler"
+else 
+    --> close connection
+endif
+
+@enduml

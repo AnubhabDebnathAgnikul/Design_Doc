@@ -1,0 +1,35 @@
+
+@startuml IMU
+(*) --> "IMU_start"
+"IMU_start" --> "get process info"
+note left: get process id, set process name
+"get process info" -> "Initialize LOG file"
+"Initialize LOG file" -> "sensor_setup()"
+note right: seteup initial parameters of IMU
+"sensor_setup()" --> "ipc_init()"
+note right : setup message queues \n[Sequencer,Navigation,Telemetry]
+"ipc_init()"-left-> open & read calibration file
+"open & read calibration file" --> Serial connection with IMU 
+note left : Iitialize serial port that is connected to IMU
+--> Read command \nfrom Sequencer
+if"Start? " then
+  ->[yes] "start reading"
+  "start reading" -> clear UART buffer
+else
+  -->[ no] "stop reading"
+
+"stop reading" --> clear UART buffer
+
+"clear UART buffer" --> read from IMU 
+note left : UART communication
+"read from IMU" --> Extract data from datagram
+"Extract data from datagram" --> apply calibration on IMU data
+"apply calibration on IMU data" --> send data to Navigation
+"send data to Navigation" -->[ Loop \n indefinitely]  Read command \nfrom Sequencer
+"apply calibration on IMU data" --> Packetization
+"Packetization" --> Ethernet Transmitter
+note left: send data to Telemetry**
+"Ethernet Transmitter" ->[Loop \n indefinitely] Read command \nfrom Sequencer
+
+
+@enduml
